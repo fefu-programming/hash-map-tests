@@ -94,7 +94,7 @@ public:
 
     bool operator!=(const custom_allocator&) const
     {
-        return true;
+        return false;
     }
 };
 
