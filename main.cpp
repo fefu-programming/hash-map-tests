@@ -1,12 +1,19 @@
-#include <unordered_map>
-
 #include "hash-map.hpp"
+
+// *************************
+// *************************
+// *************************
+// *************************
+// *************************
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
+#include <iostream>
+#include <unordered_map>
 
 using namespace std;
-using namespace fefu;
+
+using namespace hm;
 
 
 template<typename T>
@@ -260,13 +267,6 @@ TEST_CASE("_emplace")
     REQUIRE(m.contains(1));
 }
 
-TEST_CASE("_insert_move_deleted")
-{
-    hash_map<int, declarator<mc, ma>> m;
-    pair<const int, declarator<mc, ma>> p(piecewise_construct, std::tuple<int>(1), std::tuple<>());
-    m.insert(p);
-}
-
 TEST_CASE("_insert_copy_deleted")
 {
     hash_map<int, declarator<cc, ca>> m;
@@ -276,15 +276,15 @@ TEST_CASE("_insert_copy_deleted")
 
 TEST_CASE("_try_emplace")
 {
-    hash_map<int, declarator<dc, cc, ca, mc, ma>> m;
+    hash_map<int, declarator<dc, cc, ca>> m;
     m.try_emplace(1, 4);
     REQUIRE(m.at(1).x == 4);
 }
 
 TEST_CASE("_swap")
 {
-    hash_map<int, declarator<dc, cc, ca, mc, ma>> m1;
-    hash_map<int, declarator<dc, cc, ca, mc, ma>> m2;
+    hash_map<int, declarator<dc, cc, ca>> m1;
+    hash_map<int, declarator<dc, cc, ca>> m2;
     m1.try_emplace(1, 4);
     m2.try_emplace(5, 2);
     m1.swap(m2);
@@ -294,9 +294,9 @@ TEST_CASE("_swap")
 
 TEST_CASE("_merge_ref")
 {
-    hash_map<int, declarator<dc, mc, ma>> m1;
+    hash_map<int, declarator<dc>> m1;
     m1.try_emplace(1, 4);
-    hash_map<int, declarator<dc, mc, ma>> m2;
+    hash_map<int, declarator<dc>> m2;
     m2.try_emplace(5, 2);
     m1.merge(m2);
     REQUIRE(m1.at(5).x == 2);
@@ -312,4 +312,69 @@ TEST_CASE("_merge_rref")
     m1.merge(std::move(m2));
     REQUIRE(m1.at(5).x == 2);
 }
+
+TEST_CASE("_load_factor")
+{
+    hmint m;
+    for (int i = 0; i < 100; ++i)
+        m.insert({i, 1});
+    for (int i = 0; i < 100; ++i)
+        m.erase(i);
+    REQUIRE(m.load_factor() > 0.0f);
+}
+
+struct custom_hash
+{
+    vector<long long unsigned int> rnd;
+
+    custom_hash()
+    {
+        for (int i = 0; i < 1000000; ++i)
+            rnd.push_back(rand());
+    }
+
+    long long unsigned int operator()(int i) const
+    {
+        return rnd[i];
+    }
+};
+
+TEST_CASE("_stress")
+{
+    hash_map<int, int, custom_hash> m(1000000);
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({i, i * 3});
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({i, i * 3});
+    }
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({i, i * 3});
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 0; i < 100; ++i)
+        REQUIRE(m[i] == i * 3);
+    REQUIRE(m[999999] == 2999997);
+    REQUIRE(m.size() == 101);
+}
+
+
+
+
+
+
 
