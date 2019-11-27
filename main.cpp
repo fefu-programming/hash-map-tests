@@ -1,19 +1,56 @@
-#include "hash-map.hpp"
+#include <vector>
+#include <string>
+#include <list>
+#include <forward_list>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
+#include <stack>
+#include <queue>
+#include <deque>
 
-// *************************
-// *************************
-// *************************
-// *************************
-// *************************
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <numeric>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <tuple>
+#include <type_traits>
+#include <functional>
+#include <utility>
+#include <atomic>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <iterator>
+#include <memory>
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <iostream>
-#include <unordered_map>
+
+
+
+// *************************
+// *************************
+// *************************
+// *************************
+// *************************
+
+#include "hash_map.hpp"
+using namespace fefu;
+
+// *************************
+// *************************
+// *************************
+// *************************
+// *************************
+
 
 using namespace std;
-
-using namespace hm;
 
 
 template<typename T>
@@ -127,8 +164,8 @@ TEST_CASE("_ctor()")
 
 TEST_CASE("_ctor(n)")
 {
-    hmint m(666);
-    REQUIRE(m.bucket_count() == 666);
+    hmint m(2048);
+    REQUIRE(m.bucket_count() == 2048);
 }
 
 TEST_CASE("_ctor(a)")
@@ -140,25 +177,25 @@ TEST_CASE("_ctor(a)")
 TEST_CASE("_ctor(l, n)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hmint m(l, 666);
+    hmint m(l, 2048);
     REQUIRE(m[1] == 2);
     REQUIRE(m[3] == 4);
-    REQUIRE(m.bucket_count() == 666);
+    REQUIRE(m.bucket_count() == 2048);
 }
 
 TEST_CASE("_ctor(b, e, n")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hmint m(l.begin(), l.end(), 666);
+    hmint m(l.begin(), l.end(), 2048);
     REQUIRE(m[1] == 2);
     REQUIRE(m[3] == 4);
-    REQUIRE(m.bucket_count() == 666);
+    REQUIRE(m.bucket_count() == 2048);
 }
 
 TEST_CASE("_ctor(cref)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     hminta m2(m1);
     REQUIRE(m1[1] == m2[1]);
     REQUIRE(m1[3] == m2[3]);
@@ -169,7 +206,7 @@ TEST_CASE("_ctor(cref)")
 TEST_CASE("_ctor(cref, a)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     atype a;
     hminta m2(m1, a);
     REQUIRE(m1[1] == m2[1]);
@@ -181,7 +218,7 @@ TEST_CASE("_ctor(cref, a)")
 TEST_CASE("_ctor(rref)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     hminta m2(std::move(m1));
     REQUIRE(m2[1] == 2);
     REQUIRE(m2[3] == 4);
@@ -191,7 +228,7 @@ TEST_CASE("_ctor(rref)")
 TEST_CASE("_ctor(rref, a)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     atype a;
     hminta m2(std::move(m1), a);
     REQUIRE(m2[1] == 2);
@@ -202,7 +239,7 @@ TEST_CASE("_ctor(rref, a)")
 TEST_CASE("_=(cref)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     hminta m2;
     m2 = m1;
     REQUIRE(m1[1] == m2[1]);
@@ -214,7 +251,7 @@ TEST_CASE("_=(cref)")
 TEST_CASE("_=(rref)")
 {
     std::initializer_list<pair<const int, int>> l{{1, 2}, {3, 4}};
-    hminta m1(l.begin(), l.end(), 666);
+    hminta m1(l.begin(), l.end(), 2048);
     hminta m2;
     m2 = std::move(m1);
     REQUIRE(m2[1] == 2);
@@ -313,6 +350,19 @@ TEST_CASE("_merge_rref")
     REQUIRE(m1.at(5).x == 2);
 }
 
+TEST_CASE("_swap_compile_time_check")
+{
+    hash_map<int, declarator<dc, cc, ca, mc, ma>> m1;
+    hash_map<int, declarator<dc, cc, ca, mc, ma>> m2;
+    m1.swap(m2);
+}
+
+TEST_CASE("_insert_or_assign_compile_time_check")
+{
+    hash_map<int, declarator<dc, cc, ca>> m;
+    m.insert_or_assign(1, 2);
+}
+
 TEST_CASE("_load_factor")
 {
     hmint m;
@@ -321,6 +371,65 @@ TEST_CASE("_load_factor")
     for (int i = 0; i < 100; ++i)
         m.erase(i);
     REQUIRE(m.load_factor() > 0.0f);
+}
+
+template<typename TimePoint>
+class time_meter
+{
+public:
+    using time_point = TimePoint;
+
+private:
+    std::function<time_point()> m_fnow;
+    std::function<double(time_point, time_point)> m_fsec;
+    time_point m_begin;
+    time_point m_stop;
+    bool m_stopped;
+
+public:
+    template<typename FNow, typename FSec>
+    time_meter(FNow&& now, FSec&& sec) : m_fnow(std::forward<FNow>(now)), m_fsec(std::forward<FSec>(sec)), m_begin(m_fnow()), m_stopped(false) { }
+
+    double seconds() const
+    {
+        if (m_stopped)
+            return m_fsec(m_begin, m_stop);
+        return m_fsec(m_begin, m_fnow());
+    }
+
+    void restart()
+    {
+        m_stopped = false;
+        m_begin = m_fnow();
+    }
+
+    void stop()
+    {
+        if (m_stopped)
+            return;
+        m_stop = m_fnow();
+        m_stopped = true;
+    }
+
+    void start()
+    {
+        if (!m_stopped)
+            return;
+        m_stopped = false;
+        m_begin += m_fnow() - m_stop;
+    }
+};
+
+auto create_tm()
+{
+    using tm_type = time_meter<std::chrono::high_resolution_clock::time_point>;
+
+    static const auto get_sec = [](tm_type::time_point p1, tm_type::time_point p2)
+    {
+        return static_cast<double>((p2 - p1).count()) / std::chrono::high_resolution_clock::period::den;
+    };
+
+    return tm_type(std::chrono::high_resolution_clock::now, get_sec);
 }
 
 struct custom_hash
@@ -341,7 +450,9 @@ struct custom_hash
 
 TEST_CASE("_stress")
 {
+    auto tm = create_tm();
     hash_map<int, int, custom_hash> m(1000000);
+    m.max_load_factor(0.1f);
     for (int i = 0; i < 1000000; ++i)
     {
         m.insert({i, i * 3});
@@ -370,11 +481,8 @@ TEST_CASE("_stress")
         REQUIRE(m[i] == i * 3);
     REQUIRE(m[999999] == 2999997);
     REQUIRE(m.size() == 101);
+    for (int i = 0; i < 1000; ++i)
+        m.insert({rand() % 1000000, rand()});
+    cout << "**********\n" << "STRESS TIME = " << tm.seconds() << "\n**********" << endl;
 }
-
-
-
-
-
-
 
