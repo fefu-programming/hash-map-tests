@@ -170,8 +170,9 @@ TEST_CASE("_ctor(n)")
 
 TEST_CASE("_ctor(a)")
 {
-    hminta m;
-    REQUIRE(std::is_same_v<custom_allocator<std::pair<const int, int>>, std::decay_t<decltype(m.get_allocator())>>);
+    atype a(4);
+    hminta m(a);
+    REQUIRE(m.get_allocator().x == 4);
 }
 
 TEST_CASE("_ctor(l, n)")
