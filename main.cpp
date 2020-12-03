@@ -67,6 +67,8 @@ public:
 
 public:
     int x;
+    
+    custom_allocator(int x) : x(x) { }
 
     custom_allocator() : x(rand()) { }
 
